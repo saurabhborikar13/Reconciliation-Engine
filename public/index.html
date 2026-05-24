@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KoinX — Reconciliation Engine</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- BACKGROUND GRID -->
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">⬡</span>
+        <span class="logo-text">KoinX</span>
+        <span class="logo-tag">Reconciliation Engine</span>
+      </div>
+      <div class="header-status">
+        <span class="status-dot" id="dbStatus"></span>
+        <span class="status-label" id="dbLabel">Connecting…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- HERO -->
+    <section class="hero">
+      <h1 class="hero-title">Transaction<br/><em>Reconciliation</em></h1>
+      <p class="hero-sub">Ingest, match, and audit crypto transactions across user and exchange datasets with configurable tolerance rules.</p>
+    </section>
+
+    <!-- RUN PANEL -->
+    <section class="panel run-panel" id="runPanel">
+      <div class="panel-header">
+        <h2>New Reconciliation Run</h2>
+        <span class="panel-badge">POST /api/reconcile</span>
+      </div>
+
+      <form id="reconcileForm" class="run-form" novalidate>
+
+        <!-- FILE UPLOADS -->
+        <div class="file-grid">
+          <div class="file-zone" id="userZone">
+            <input type="file" id="userFile" accept=".csv" hidden />
+            <label for="userFile" class="file-label">
+              <div class="file-icon">↑</div>
+              <div class="file-title">User Transactions</div>
+              <div class="file-hint">user_transactions.csv</div>
+              <div class="file-name" id="userFileName">No file selected</div>
+            </label>
+          </div>
+
+          <div class="file-arrow">⇄</div>
+
+          <div class="file-zone" id="exchangeZone">
+            <input type="file" id="exchangeFile" accept=".csv" hidden />
+            <label for="exchangeFile" class="file-label">
+              <div class="file-icon">↑</div>
+              <div class="file-title">Exchange Transactions</div>
+              <div class="file-hint">exchange_transactions.csv</div>
+              <div class="file-name" id="exchangeFileName">No file selected</div>
+            </label>
+          </div>
+        </div>
+
+        <!-- TOLERANCES -->
+        <div class="tolerances">
+          <div class="tolerance-group">
+            <label class="tol-label">
+              <span class="tol-key">TIMESTAMP_TOLERANCE_SECONDS</span>
+              <span class="tol-desc">Max time delta between matched transactions</span>
+            </label>
+            <div class="tol-input-wrap">
+              <input type="number" id="tsToleranceInput" class="tol-input" value="300" min="0" max="86400" />
+              <span class="tol-unit">sec</span>
+            </div>
+            <input type="range" id="tsSlider" class="tol-slider" min="0" max="3600" value="300" step="10" />
+          </div>
+
+          <div class="tolerance-group">
+            <label class="tol-label">
+              <span class="tol-key">QUANTITY_TOLERANCE_PCT</span>
+              <span class="tol-desc">Max allowable quantity deviation (%)</span>
+            </label>
+            <div class="tol-input-wrap">
+              <input type="number" id="qtyToleranceInput" class="tol-input" value="0.01" min="0" max="100" step="0.001" />
+              <span class="tol-unit">%</span>
+            </div>
+            <input type="range" id="qtySlider" class="tol-slider" min="0" max="5" value="0.01" step="0.001" />
+          </div>
+        </div>
+
+        <!-- API BASE URL -->
+        <div class="api-row">
+          <label class="api-label">API Base URL</label>
+          <input type="text" id="apiBase" class="api-input" value="http://localhost:3000" placeholder="http://localhost:3000" />
+        </div>
+
+        <!-- SUBMIT -->
+        <button type="submit" class="run-btn" id="runBtn">
+          <span class="run-btn-text">Run Reconciliation</span>
+          <span class="run-btn-icon">→</span>
+        </button>
+      </form>
+
+      <!-- PROGRESS -->
+      <div class="progress-wrap" id="progressWrap" hidden>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="progress-label" id="progressLabel">Uploading files…</div>
+      </div>
+    </section>
+
+    <!-- ERROR BANNER -->
+    <div class="error-banner" id="errorBanner" hidden>
+      <span class="error-icon">⚠</span>
+      <span class="error-msg" id="errorMsg"></span>
+      <button class="error-close" id="errorClose">✕</button>
+    </div>
+
+    <!-- RESULTS -->
+    <section class="results-section" id="resultsSection" hidden>
+
+      <!-- RUN META -->
+      <div class="run-meta" id="runMeta"></div>
+
+      <!-- SUMMARY CARDS -->
+      <div class="summary-grid" id="summaryGrid"></div>
+
+      <!-- TABS -->
+      <div class="tabs-bar">
+        <button class="tab-btn active" data-tab="matched">Matched</button>
+        <button class="tab-btn" data-tab="conflicting">Conflicting</button>
+        <button class="tab-btn" data-tab="unmatched-user">Unmatched (User)</button>
+        <button class="tab-btn" data-tab="unmatched-exchange">Unmatched (Exchange)</button>
+        <button class="tab-btn" data-tab="data-quality">Data Quality</button>
+      </div>
+
+      <!-- TOOLBAR -->
+      <div class="table-toolbar">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search transactions…" />
+        <div class="toolbar-right">
+          <button class="dl-btn" id="dlCsvBtn">↓ Download CSV</button>
+          <button class="dl-btn dl-btn-secondary" id="dlJsonBtn">↓ Download JSON</button>
+        </div>
+      </div>
+
+      <!-- TABLE CONTAINER -->
+      <div class="table-wrap" id="tableWrap">
+        <table class="rec-table" id="recTable">
+          <thead id="recThead"></thead>
+          <tbody id="recTbody"></tbody>
+        </table>
+        <div class="table-empty" id="tableEmpty" hidden>No entries in this category.</div>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="pagination" id="pagination"></div>
+
+    </section>
+
+    <!-- HISTORY -->
+    <section class="panel history-panel" id="historyPanel">
+      <div class="panel-header">
+        <h2>Lookup Previous Run</h2>
+        <span class="panel-badge">GET /api/report/:runId</span>
+      </div>
+      <div class="history-form">
+        <input type="text" id="runIdInput" class="api-input" placeholder="Paste a Run ID (MongoDB ObjectId)…" />
+        <button class="run-btn run-btn-sm" id="lookupBtn">Fetch Report</button>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <span>KoinX Reconciliation Engine — Backend Assignment</span>
+    <span>Built with Node.js · Express · MongoDB · Multer · csv-parser</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
