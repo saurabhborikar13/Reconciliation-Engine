@@ -811,7 +811,7 @@ Zero build tooling needed. The dashboard is a single `.html` file + `.css` file 
 
 
 
-## 16. Known Limitations & Future Improvements
+## 15. Known Limitations & Future Improvements
 
 ### Current Limitations
 
