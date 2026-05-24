@@ -27,8 +27,8 @@
 12. [CSV File Format](#12-csv-file-format)
 13. [Error Handling & Data Quality](#13-error-handling--data-quality)
 14. [Key Design Decisions](#14-key-design-decisions)
-15. [Deployment Guide](#15-deployment-guide)
-16. [Known Limitations & Future Improvements](#16-known-limitations--future-improvements)
+
+15. [Known Limitations & Future Improvements](#16-known-limitations--future-improvements)
 
 ---
 
@@ -809,49 +809,7 @@ Zero build tooling needed. The dashboard is a single `.html` file + `.css` file 
 
 ---
 
-## 15. Deployment Guide
 
-### Recommended: Render (free tier, no credit card)
-
-1. Push project to a public GitHub repo (ensure `.env` is in `.gitignore`)
-2. Go to [render.com](https://render.com) → New → Web Service
-3. Connect your GitHub repo
-4. Settings:
-
-   | Field | Value |
-   |---|---|
-   | Build Command | `npm install` |
-   | Start Command | `npm start` |
-   | Instance Type | Free |
-
-5. Under **Environment** tab, add all variables from Section 5
-
-6. In MongoDB Atlas → Network Access → add `0.0.0.0/0` (Render IPs are dynamic)
-
-7. Your live URL: `https://koinx-reconciliation.onrender.com`
-
-> ⚠️ Render free tier sleeps after 15 min of inactivity. First request after sleep takes ~30s.
-
-### Alternative: Railway
-
-```bash
-npm install -g @railway/cli
-railway login
-railway init
-railway up
-# Add env vars in Railway dashboard
-```
-
-### After deploying
-
-Update the **API Base URL** field in the dashboard (or change the default in `public/app.js`):
-
-```js
-// public/app.js — line ~16
-apiBase: 'https://your-app.onrender.com',
-```
-
----
 
 ## 16. Known Limitations & Future Improvements
 
